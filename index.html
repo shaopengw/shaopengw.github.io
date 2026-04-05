@@ -20,6 +20,52 @@
       font-size: 16px;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
+      scroll-behavior: smooth;
+    }
+    
+    /* 滚动进度条 */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      z-index: 9999;
+      transition: width 0.1s ease;
+    }
+    
+    /* 加载动画 */
+    .loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    
+    .loader-wrapper.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(56, 139, 253, 0.2);
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.6s linear 3;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
     .page-wrapper {
@@ -134,6 +180,33 @@
       backdrop-filter: blur(5px);
       position: relative;
       z-index: 1;
+      animation: fadeInUp 0.8s ease-out 1s both;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .sidebar {
+      animation: fadeInLeft 0.6s ease-out 0.5s both;
+    }
+    
+    @keyframes fadeInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
     
     .lang-switch {
@@ -387,12 +460,20 @@
   </style>
 </head>
 <body>
+  <!-- 滚动进度条 -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+  
+  <!-- 加载动画 -->
+  <div class="loader-wrapper" id="loader">
+    <div class="loader"></div>
+  </div>
+  
   <div class="page-wrapper">
     <aside class="sidebar">
       <img src="people.jpg" alt="Shaopeng Wei" class="avatar" />
       <h1>
-        <span class="lang-zh">魏少朋</span>
-        <span class="lang-en" style="display:none;">Shaopeng Wei</span>
+        <span class="lang-zh" id="name-zh">魏少朋</span>
+        <span class="lang-en" id="name-en" style="display:none;">Shaopeng Wei</span>
       </h1>
       <p class="subtitle">
         <span class="lang-zh">广西大学<br>助理教授</span>
@@ -418,7 +499,7 @@
         <button id="btn-en" onclick="switchLang('en')">English</button>
       </div>
       <h2><span class="lang-zh">简介</span><span class="lang-en" style="display:none;">About</span></h2>
-      <p class="lang-zh">助理教授，硕士研究生导师。西南财经大学管理学博士，曾受国家留学基金委（CSC）资助在苏黎世联邦理工学院（ETH Zurich）计算机系联合培养（2022–2023）。从事金融科技、商务智能、人工智能和多模态大语言模型相关研究。在 IEEE Transactions on Knowledge and Data Engineering、Information Sciences、Neural Networks 和《计算机研究与发展》等国内外高水平期刊发表论文 7 篇。担任 IEEE Transactions on Knowledge and Data Engineering、IEEE Transactions on Neural Networks and Learning Systems、ACM SIGKDD、AAAI、ACM MM 等国际顶级期刊和会议审稿人。作为第一主笔人撰写的研究报告 3 次获省部级领导批示。主持并完成厅级项目2项，参与江苏省社科项目 1 项。</p>
+      <p class="lang-zh">助理教授，硕士研究生导师。西南财经大学管理学博士，曾受国家留学基金委（CSC）资助在苏黎世联邦理工学院（ETH Zurich）计算机系联合培养（2022–2023）。从事金融科技、商务智能、人工智能和多模态大语言模型相关研究。在 IEEE Transactions on Knowledge and Data Engineering、Information Sciences、Neural Networks 和《计算机研究与发展》等国内外高水平期刊发表论文 6 篇。担任 IEEE Transactions on Knowledge and Data Engineering、IEEE Transactions on Neural Networks and Learning Systems、ACM SIGKDD、AAAI、ACM MM 等国际顶级期刊和会议审稿人。作为第一主笔人撰写的研究报告 3 次获省部级领导批示。主持并完成厅级项目2项，参与江苏省社科项目 1 项。</p>
       <p class="lang-en" style="display:none;">Shaopeng Wei received his Ph.D. from Southwestern University of Finance and Economics in 2024. He was a visiting scholar at ETH Zurich (2022–2023) funded by CSC. Currently an assistant professor at Guangxi University. His research interests include graph learning, multi-agent systems, and fintech.</p>
 
       <h2><span class="lang-zh">经历</span><span class="lang-en" style="display:none;">Experience</span></h2>
@@ -559,9 +640,28 @@
       document.body.appendChild(script);
     }
     
+    // 滚动进度条
+    function updateScrollProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      document.getElementById('scrollProgress').style.width = scrollPercent + '%';
+    }
+    
+    window.addEventListener('scroll', updateScrollProgress);
+    
+    // 页面加载完成后
     window.onload = function() {
+      // 隐藏加载动画
+      setTimeout(function() {
+        document.getElementById('loader').classList.add('hidden');
+      }, 300);
+      
+      // 初始化语言和访问量
       switchLang('zh');
-      setTimeout(refreshVisitCount, 1500);
+      
+      // 延迟初始化访问量
+      setTimeout(refreshVisitCount, 500);
     };
   </script>
 </body>
